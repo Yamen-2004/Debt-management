@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 
 import '../services/auth_service.dart';
@@ -14,7 +15,7 @@ class AuthController extends GetxController {
 
   Future<bool> login(String email, String password) async {
     if (email.trim().isEmpty || password.trim().isEmpty) {
-      errorMessage.value = 'Please enter email and password';
+      errorMessage.value = 'الرجاء إدخال البريد الإلكتروني وكلمة المرور';
       return false;
     }
 
@@ -24,12 +25,12 @@ class AuthController extends GetxController {
     try {
       final user = await _authService.login(email, password);
 
-      // Make sure a shop document exists for this account.
-      // Developers can edit shopName/ownerName later in Firebase Console.
+      // التأكد من وجود مستند المتجر لهذا الحساب.
+      // يمكن تعديل shopName/ownerName لاحقاً من Firebase Console.
       if (user != null) {
         await _firestoreService.createShopIfNotExists(
-          shopName: 'My Shop',
-          ownerName: user.email ?? 'Owner',
+          shopName: 'متجري',
+          ownerName: user.email ?? 'المالك',
         );
       }
 
@@ -47,12 +48,21 @@ class AuthController extends GetxController {
   }
 
   String _mapError(dynamic e) {
-    final message = e.toString();
-    if (message.contains('user-not-found') ||
-        message.contains('wrong-password') ||
-        message.contains('invalid-credential')) {
-      return 'Invalid email or password';
+    if (e is FirebaseAuthException) {
+      switch (e.code) {
+        case 'user-not-found':
+        case 'wrong-password':
+        case 'invalid-credential':
+        case 'invalid-email':
+          return 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+        case 'user-disabled':
+          return 'تم تعطيل هذا الحساب';
+        case 'too-many-requests':
+          return 'محاولات كثيرة، حاول لاحقاً';
+        case 'network-request-failed':
+          return 'تحقق من اتصالك بالإنترنت';
+      }
     }
-    return 'Login failed. Please try again';
+    return 'فشل تسجيل الدخول، حاول مرة أخرى';
   }
 }

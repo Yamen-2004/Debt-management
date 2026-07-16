@@ -19,21 +19,38 @@ class CustomerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasDebt = customer.balance > 0;
+
     return Card(
+      elevation: 0.5,
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: ListTile(
         onTap: onTap,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        leading: CircleAvatar(
+          backgroundColor:
+              (hasDebt ? Colors.redAccent : Colors.green).withOpacity(0.12),
+          child: Text(
+            customer.name.isNotEmpty ? customer.name.substring(0, 1) : '؟',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: hasDebt ? Colors.redAccent : Colors.green,
+            ),
+          ),
+        ),
         title: Text(
           customer.name,
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
-        subtitle: Text('Last Update: ${_formatDate(customer.updatedAt)}'),
+        subtitle: Text('آخر تحديث: ${_formatDate(customer.updatedAt)}'),
         trailing: Text(
-          '${customer.balance.toStringAsFixed(2)} JD',
+          '${customer.balance.toStringAsFixed(2)} د.أ',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 16,
-            color: customer.balance > 0 ? Colors.redAccent : Colors.green,
+            color: hasDebt ? Colors.redAccent : Colors.green,
           ),
         ),
       ),

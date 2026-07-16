@@ -44,7 +44,7 @@ class CustomerController extends GetxController {
         isLoading.value = false;
       },
       onError: (_) {
-        errorMessage.value = 'Failed to load customers';
+        errorMessage.value = 'فشل تحميل العملاء';
         isLoading.value = false;
       },
     );
@@ -67,14 +67,14 @@ class CustomerController extends GetxController {
         .toList();
   }
 
-  Future<bool> addCustomer(String name) async {
+  Future<bool> addCustomer(String name, {double initialBalance = 0.0}) async {
     if (name.trim().isEmpty) {
-      errorMessage.value = 'Name cannot be empty';
+      errorMessage.value = 'لا يمكن أن يكون الاسم فارغاً';
       return false;
     }
 
     try {
-      await _firestoreService.addCustomer(name);
+      await _firestoreService.addCustomer(name, initialBalance: initialBalance);
       return true;
     } catch (e) {
       errorMessage.value = e.toString().replaceAll('Exception: ', '');
@@ -84,7 +84,7 @@ class CustomerController extends GetxController {
 
   Future<bool> renameCustomer(String customerId, String newName) async {
     if (newName.trim().isEmpty) {
-      errorMessage.value = 'Name cannot be empty';
+      errorMessage.value = 'لا يمكن أن يكون الاسم فارغاً';
       return false;
     }
 

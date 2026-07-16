@@ -16,34 +16,54 @@ class AddCustomerDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final nameController = TextEditingController();
+    final amountController = TextEditingController();
     final controller = Get.find<CustomerController>();
 
     return AlertDialog(
-      title: const Text('Add Customer'),
-      content: TextField(
-        controller: nameController,
-        decoration: const InputDecoration(labelText: 'Customer Name'),
-        autofocus: true,
+      title: const Text('إضافة عميل'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: nameController,
+            decoration: const InputDecoration(labelText: 'اسم العميل'),
+            autofocus: true,
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: amountController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(
+              labelText: 'مبلغ الدين الابتدائي (اختياري)',
+            ),
+          ),
+        ],
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: const Text('إلغاء'),
         ),
         ElevatedButton(
           onPressed: () async {
-            final success = await controller.addCustomer(nameController.text);
+            final initialBalance =
+                double.tryParse(amountController.text.trim()) ?? 0.0;
+            final success = await controller.addCustomer(
+              nameController.text,
+              initialBalance: initialBalance,
+            );
             if (context.mounted) {
               Navigator.pop(context);
               if (!success) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                      content: Text(controller.errorMessage.value ?? 'Error')),
+                      content:
+                          Text(controller.errorMessage.value ?? 'حدث خطأ')),
                 );
               }
             }
           },
-          child: const Text('Add'),
+          child: const Text('إضافة'),
         ),
       ],
     );

@@ -34,19 +34,19 @@ class CustomerBottomSheet extends StatelessWidget {
         content: TextField(
           controller: amountController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(labelText: 'Amount (JD)'),
+          decoration: const InputDecoration(labelText: 'المبلغ (د.أ)'),
           autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: const Text('إلغاء'),
           ),
           ElevatedButton(
             onPressed: () async {
               final amount = double.tryParse(amountController.text.trim());
               if (amount == null || amount <= 0) {
-                controller.errorMessage.value = 'Enter a valid amount';
+                controller.errorMessage.value = 'أدخل مبلغاً صحيحاً';
                 return;
               }
 
@@ -59,13 +59,13 @@ class CustomerBottomSheet extends StatelessWidget {
                 if (!success) {
                   ScaffoldMessenger.of(dialogContext).showSnackBar(
                     SnackBar(
-                        content:
-                            Text(controller.errorMessage.value ?? 'Error')),
+                        content: Text(
+                            controller.errorMessage.value ?? 'حدث خطأ')),
                   );
                 }
               }
             },
-            child: const Text('Confirm'),
+            child: const Text('تأكيد'),
           ),
         ],
       ),
@@ -79,16 +79,16 @@ class CustomerBottomSheet extends StatelessWidget {
     await showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Edit Name'),
+        title: const Text('تعديل الاسم'),
         content: TextField(
           controller: nameController,
-          decoration: const InputDecoration(labelText: 'Customer Name'),
+          decoration: const InputDecoration(labelText: 'اسم العميل'),
           autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: const Text('إلغاء'),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -102,13 +102,13 @@ class CustomerBottomSheet extends StatelessWidget {
                 if (!success) {
                   ScaffoldMessenger.of(dialogContext).showSnackBar(
                     SnackBar(
-                        content:
-                            Text(controller.errorMessage.value ?? 'Error')),
+                        content: Text(
+                            controller.errorMessage.value ?? 'حدث خطأ')),
                   );
                 }
               }
             },
-            child: const Text('Save'),
+            child: const Text('حفظ'),
           ),
         ],
       ),
@@ -123,35 +123,54 @@ class CustomerBottomSheet extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
             Text(
               customer.name,
               style:
                   const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
+            Text(
+              '${customer.balance.toStringAsFixed(2)} د.أ',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: customer.balance > 0 ? Colors.redAccent : Colors.green,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Divider(height: 1),
             ListTile(
               leading:
                   const Icon(Icons.add_circle_outline, color: Colors.redAccent),
-              title: const Text('Increase Debt'),
+              title: const Text('زيادة الدين'),
               onTap: () {
                 Navigator.pop(context);
                 _showAmountDialog(context,
-                    title: 'Increase Debt', isIncrease: true);
+                    title: 'زيادة الدين', isIncrease: true);
               },
             ),
             ListTile(
               leading:
                   const Icon(Icons.remove_circle_outline, color: Colors.green),
-              title: const Text('Decrease Debt'),
+              title: const Text('إنقاص الدين'),
               onTap: () {
                 Navigator.pop(context);
                 _showAmountDialog(context,
-                    title: 'Decrease Debt', isIncrease: false);
+                    title: 'إنقاص الدين', isIncrease: false);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.edit_outlined),
-              title: const Text('Edit Name'),
+              leading: const Icon(Icons.edit_outlined, color: Colors.indigo),
+              title: const Text('تعديل الاسم'),
               onTap: () {
                 Navigator.pop(context);
                 _showEditNameDialog(context);

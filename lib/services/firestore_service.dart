@@ -56,12 +56,17 @@ class FirestoreService {
             .toList());
   }
 
-  /// Adds a new customer with balance starting at 0.
-  /// Throws if a customer with the same name already exists.
-  Future<void> addCustomer(String name) async {
+  /// Adds a new customer with balance starting at [initialBalance] (default 0).
+  /// Throws if a customer with the same name already exists, or if
+  /// [initialBalance] is negative.
+  Future<void> addCustomer(String name, {double initialBalance = 0.0}) async {
+    if (initialBalance < 0) {
+      throw Exception('لا يمكن أن يكون المبلغ سالباً');
+    }
+
     final exists = await customerExists(name);
     if (exists) {
-      throw Exception('A customer with this name already exists');
+      throw Exception('يوجد عميل بهذا الاسم مسبقاً');
     }
 
     final now = DateTime.now();
@@ -69,7 +74,7 @@ class FirestoreService {
     await _customersRef.add({
       'name': name.trim(),
       'searchName': TextUtils.generateSearchName(name),
-      'balance': 0.0,
+      'balance': initialBalance,
       'createdAt': Timestamp.fromDate(now),
       'updatedAt': Timestamp.fromDate(now),
     });
@@ -80,7 +85,7 @@ class FirestoreService {
   Future<void> updateCustomerName(String customerId, String newName) async {
     final exists = await customerExists(newName, excludeId: customerId);
     if (exists) {
-      throw Exception('A customer with this name already exists');
+      throw Exception('يوجد عميل بهذا الاسم مسبقاً');
     }
 
     await _customersRef.doc(customerId).update({
@@ -93,7 +98,7 @@ class FirestoreService {
   /// Increases a customer's balance by [amount].
   Future<void> increaseBalance(String customerId, double amount) async {
     if (amount <= 0) {
-      throw Exception('Amount must be greater than zero');
+      throw Exception('يجب أن يكون المبلغ أكبر من صفر');
     }
 
     final docRef = _customersRef.doc(customerId);
@@ -113,7 +118,7 @@ class FirestoreService {
   /// Throws if the result would go below zero.
   Future<void> decreaseBalance(String customerId, double amount) async {
     if (amount <= 0) {
-      throw Exception('Amount must be greater than zero');
+      throw Exception('يجب أن يكون المبلغ أكبر من صفر');
     }
 
     final docRef = _customersRef.doc(customerId);
@@ -124,7 +129,7 @@ class FirestoreService {
           ((snapshot.data()?['balance'] as num?) ?? 0).toDouble();
 
       if (amount > currentBalance) {
-        throw Exception('Balance cannot become negative');
+        throw Exception('لا يمكن أن يصبح الرصيد سالباً');
       }
 
       transaction.update(docRef, {
