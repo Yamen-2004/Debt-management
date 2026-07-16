@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "238446669073",
+    "project_id": "debtbook-5096b",
+    "storage_bucket": "debtbook-5096b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:238446669073:android:3edd5c8cf8329a52adf0b0",
+        "android_client_info": {
+          "package_name": "com.debtbook.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCE0ifkeU54IWihn4RAEfB7_H1_v8tDzvM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:238446669073:android:5509492fa0c6a401adf0b0",
+        "android_client_info": {
+          "package_name": "com.example.debt_book"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCE0ifkeU54IWihn4RAEfB7_H1_v8tDzvM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
