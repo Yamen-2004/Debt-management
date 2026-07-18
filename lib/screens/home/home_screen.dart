@@ -1,14 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../controllers/auth_controller.dart';
 import '../../controllers/customer_controller.dart';
+import '../../services/backup_service.dart';
 import '../../widgets/add_customer_dialog.dart';
 import '../../widgets/customer_bottom_sheet.dart';
 import '../../widgets/customer_card.dart';
 import '../../widgets/summary_card.dart';
 
 const _kPrimary = Color(0xFF4F46E5);
+
+Future<void> _handleManualBackup(
+  BuildContext context,
+  CustomerController customerController,
+) async {
+  try {
+    final file =
+        await BackupService().runManualBackup(customerController.customers);
+
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('تم إنشاء نسخة احتياطية بنجاح')),
+    );
+
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(file.path)],
+        text: 'نسخة احتياطية من دفتر الديون',
+      ),
+    );
+  } catch (e) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('فشل إنشاء النسخة الاحتياطية')),
+    );
+  }
+}
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -32,6 +61,11 @@ class HomeScreen extends StatelessWidget {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          IconButton(
+            tooltip: 'نسخة احتياطية',
+            icon: const Icon(Icons.backup_outlined),
+            onPressed: () => _handleManualBackup(context, customerController),
+          ),
           IconButton(
             tooltip: 'تسجيل الخروج',
             icon: const Icon(Icons.logout),

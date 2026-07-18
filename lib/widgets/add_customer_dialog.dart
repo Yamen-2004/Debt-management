@@ -17,6 +17,7 @@ class AddCustomerDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final nameController = TextEditingController();
     final amountController = TextEditingController();
+    final noteController = TextEditingController();
     final controller = Get.find<CustomerController>();
 
     return AlertDialog(
@@ -37,6 +38,11 @@ class AddCustomerDialog extends StatelessWidget {
               labelText: 'مبلغ الدين الابتدائي (اختياري)',
             ),
           ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: noteController,
+            decoration: const InputDecoration(labelText: 'ملاحظة (اختياري)'),
+          ),
         ],
       ),
       actions: [
@@ -51,6 +57,7 @@ class AddCustomerDialog extends StatelessWidget {
             final success = await controller.addCustomer(
               nameController.text,
               initialBalance: initialBalance,
+              note: noteController.text,
             );
             if (context.mounted) {
               Navigator.pop(context);

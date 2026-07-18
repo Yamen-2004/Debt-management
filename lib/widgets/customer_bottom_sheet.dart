@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../controllers/customer_controller.dart';
 import '../models/customer_model.dart';
+import '../screens/history/customer_history_screen.dart';
 
 class CustomerBottomSheet extends StatelessWidget {
   final CustomerModel customer;
@@ -25,17 +26,29 @@ class CustomerBottomSheet extends StatelessWidget {
     required bool isIncrease,
   }) async {
     final amountController = TextEditingController();
+    final noteController = TextEditingController();
     final controller = Get.find<CustomerController>();
 
     await showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text(title),
-        content: TextField(
-          controller: amountController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(labelText: 'المبلغ (د.أ)'),
-          autofocus: true,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: amountController,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(labelText: 'المبلغ (د.أ)'),
+              autofocus: true,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: noteController,
+              decoration: const InputDecoration(labelText: 'ملاحظة (اختياري)'),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -50,9 +63,12 @@ class CustomerBottomSheet extends StatelessWidget {
                 return;
               }
 
+              final note = noteController.text;
               final success = isIncrease
-                  ? await controller.increaseBalance(customer.id, amount)
-                  : await controller.decreaseBalance(customer.id, amount);
+                  ? await controller.increaseBalance(customer.id, amount,
+                      note: note)
+                  : await controller.decreaseBalance(customer.id, amount,
+                      note: note);
 
               if (dialogContext.mounted) {
                 Navigator.pop(dialogContext);
@@ -174,6 +190,20 @@ class CustomerBottomSheet extends StatelessWidget {
               onTap: () {
                 Navigator.pop(context);
                 _showEditNameDialog(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.receipt_long_outlined,
+                  color: Colors.indigo),
+              title: const Text('سجل الحركات'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => CustomerHistoryScreen(customer: customer),
+                  ),
+                );
               },
             ),
           ],

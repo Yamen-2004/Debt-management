@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/customer_model.dart';
+import '../models/transaction_model.dart';
 import '../utils/text_utils.dart';
 
 /// Handles all communication with Cloud Firestore.
@@ -13,6 +14,10 @@ class FirestoreService {
 
   CollectionReference<Map<String, dynamic>> get _customersRef =>
       _db.collection('shops').doc(_uid).collection('customers');
+
+  CollectionReference<Map<String, dynamic>> _transactionsRef(
+          String customerId) =>
+      _customersRef.doc(customerId).collection('transactions');
 
   /// Creates the shop document if it doesn't already exist.
   /// The shop document id always equals the Firebase Auth uid.
@@ -57,9 +62,14 @@ class FirestoreService {
   }
 
   /// Adds a new customer with balance starting at [initialBalance] (default 0).
-  /// Throws if a customer with the same name already exists, or if
-  /// [initialBalance] is negative.
-  Future<void> addCustomer(String name, {double initialBalance = 0.0}) async {
+  /// If [initialBalance] is greater than zero, an initial 'increase'
+  /// transaction is recorded in the same batch. Throws if a customer with
+  /// the same name already exists, or if [initialBalance] is negative.
+  Future<void> addCustomer(
+    String name, {
+    double initialBalance = 0.0,
+    String note = '',
+  }) async {
     if (initialBalance < 0) {
       throw Exception('لا يمكن أن يكون المبلغ سالباً');
     }
@@ -70,14 +80,28 @@ class FirestoreService {
     }
 
     final now = DateTime.now();
+    final customerDoc = _customersRef.doc();
+    final batch = _db.batch();
 
-    await _customersRef.add({
+    batch.set(customerDoc, {
       'name': name.trim(),
       'searchName': TextUtils.generateSearchName(name),
       'balance': initialBalance,
       'createdAt': Timestamp.fromDate(now),
       'updatedAt': Timestamp.fromDate(now),
     });
+
+    if (initialBalance > 0) {
+      final transactionDoc = _transactionsRef(customerDoc.id).doc();
+      batch.set(transactionDoc, {
+        'type': 'increase',
+        'amount': initialBalance,
+        'note': note.trim(),
+        'createdAt': Timestamp.fromDate(now),
+      });
+    }
+
+    await batch.commit();
   }
 
   /// Renames a customer, regenerating their searchName.
@@ -95,13 +119,19 @@ class FirestoreService {
     });
   }
 
-  /// Increases a customer's balance by [amount].
-  Future<void> increaseBalance(String customerId, double amount) async {
+  /// Increases a customer's balance by [amount], recording an 'increase'
+  /// transaction in the same Firestore transaction.
+  Future<void> increaseBalance(
+    String customerId,
+    double amount, {
+    String note = '',
+  }) async {
     if (amount <= 0) {
       throw Exception('يجب أن يكون المبلغ أكبر من صفر');
     }
 
     final docRef = _customersRef.doc(customerId);
+    final transactionDoc = _transactionsRef(customerId).doc();
 
     await _db.runTransaction((transaction) async {
       final snapshot = await transaction.get(docRef);
@@ -111,17 +141,30 @@ class FirestoreService {
         'balance': currentBalance.toDouble() + amount,
         'updatedAt': Timestamp.now(),
       });
+
+      transaction.set(transactionDoc, {
+        'type': 'increase',
+        'amount': amount,
+        'note': note.trim(),
+        'createdAt': Timestamp.now(),
+      });
     });
   }
 
-  /// Decreases a customer's balance by [amount].
+  /// Decreases a customer's balance by [amount], recording a 'decrease'
+  /// transaction in the same Firestore transaction.
   /// Throws if the result would go below zero.
-  Future<void> decreaseBalance(String customerId, double amount) async {
+  Future<void> decreaseBalance(
+    String customerId,
+    double amount, {
+    String note = '',
+  }) async {
     if (amount <= 0) {
       throw Exception('يجب أن يكون المبلغ أكبر من صفر');
     }
 
     final docRef = _customersRef.doc(customerId);
+    final transactionDoc = _transactionsRef(customerId).doc();
 
     await _db.runTransaction((transaction) async {
       final snapshot = await transaction.get(docRef);
@@ -136,6 +179,40 @@ class FirestoreService {
         'balance': currentBalance - amount,
         'updatedAt': Timestamp.now(),
       });
+
+      transaction.set(transactionDoc, {
+        'type': 'decrease',
+        'amount': amount,
+        'note': note.trim(),
+        'createdAt': Timestamp.now(),
+      });
     });
+  }
+
+  /// Realtime stream of a customer's transactions, newest first.
+  Stream<List<TransactionModel>> getTransactions(String customerId) {
+    return _transactionsRef(customerId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => TransactionModel.fromMap(doc.id, doc.data()))
+            .toList());
+  }
+
+  /// Deletes all transaction history for a customer, in batches of at most
+  /// 500 documents (Firestore's per-batch write limit). Does not touch the
+  /// customer's balance field.
+  Future<void> deleteTransactionHistory(String customerId) async {
+    final docs = await _transactionsRef(customerId).get();
+
+    const chunkSize = 500;
+    for (var i = 0; i < docs.docs.length; i += chunkSize) {
+      final chunk = docs.docs.skip(i).take(chunkSize);
+      final batch = _db.batch();
+      for (final doc in chunk) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+    }
   }
 }
