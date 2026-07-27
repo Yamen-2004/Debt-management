@@ -36,9 +36,9 @@ class CustomerBottomSheet extends StatelessWidget {
 
       final amount = double.tryParse(amountController.text.trim());
       if (amount == null || amount <= 0) {
-        ScaffoldMessenger.of(dialogContext).showSnackBar(
-          const SnackBar(content: Text('أدخل مبلغاً صحيحاً')),
-        );
+        ScaffoldMessenger.of(
+          dialogContext,
+        ).showSnackBar(const SnackBar(content: Text('أدخل مبلغاً صحيحاً')));
         return;
       }
 
@@ -77,8 +77,9 @@ class CustomerBottomSheet extends StatelessWidget {
           children: [
             TextField(
               controller: amountController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
               ],
@@ -97,21 +98,23 @@ class CustomerBottomSheet extends StatelessWidget {
             onPressed: () => Navigator.pop(dialogContext),
             child: const Text('إلغاء'),
           ),
-          Obx(() => ElevatedButton(
-                onPressed: isSubmitting.value
-                    ? null
-                    : () => handleConfirm(dialogContext),
-                child: isSubmitting.value
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Text('تأكيد'),
-              )),
+          Obx(
+            () => ElevatedButton(
+              onPressed: isSubmitting.value
+                  ? null
+                  : () => handleConfirm(dialogContext),
+              child: isSubmitting.value
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text('تأكيد'),
+            ),
+          ),
         ],
       ),
     );
@@ -147,8 +150,8 @@ class CustomerBottomSheet extends StatelessWidget {
                 if (!success) {
                   ScaffoldMessenger.of(dialogContext).showSnackBar(
                     SnackBar(
-                        content: Text(
-                            controller.errorMessage.value ?? 'حدث خطأ')),
+                      content: Text(controller.errorMessage.value ?? 'حدث خطأ'),
+                    ),
                   );
                 }
               }
@@ -179,8 +182,7 @@ class CustomerBottomSheet extends StatelessWidget {
             ),
             Text(
               customer.name,
-              style:
-                  const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
@@ -194,23 +196,33 @@ class CustomerBottomSheet extends StatelessWidget {
             const SizedBox(height: 12),
             const Divider(height: 1),
             ListTile(
-              leading:
-                  const Icon(Icons.add_circle_outline, color: Colors.redAccent),
+              leading: const Icon(
+                Icons.add_circle_outline,
+                color: Colors.redAccent,
+              ),
               title: const Text('زيادة الدين'),
               onTap: () {
                 Navigator.pop(context);
-                _showAmountDialog(context,
-                    title: 'زيادة الدين', isIncrease: true);
+                _showAmountDialog(
+                  context,
+                  title: 'زيادة الدين',
+                  isIncrease: true,
+                );
               },
             ),
             ListTile(
-              leading:
-                  const Icon(Icons.remove_circle_outline, color: Colors.green),
+              leading: const Icon(
+                Icons.remove_circle_outline,
+                color: Colors.green,
+              ),
               title: const Text('إنقاص الدين'),
               onTap: () {
                 Navigator.pop(context);
-                _showAmountDialog(context,
-                    title: 'إنقاص الدين', isIncrease: false);
+                _showAmountDialog(
+                  context,
+                  title: 'إنقاص الدين',
+                  isIncrease: false,
+                );
               },
             ),
             ListTile(
@@ -222,8 +234,10 @@ class CustomerBottomSheet extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.receipt_long_outlined,
-                  color: Colors.indigo),
+              leading: const Icon(
+                Icons.receipt_long_outlined,
+                color: Colors.indigo,
+              ),
               title: const Text('سجل الحركات'),
               onTap: () {
                 Navigator.pop(context);
@@ -233,6 +247,56 @@ class CustomerBottomSheet extends StatelessWidget {
                     builder: (_) => CustomerHistoryScreen(customer: customer),
                   ),
                 );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline, color: Colors.red),
+              title: const Text('حذف العميل'),
+              onTap: () async {
+                Navigator.pop(context);
+
+                final controller = Get.find<CustomerController>();
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (dialogContext) => AlertDialog(
+                    title: const Text('تأكيد الحذف'),
+                    content: const Text(
+                      'هل أنت متأكد أنك تريد حذف هذا العميل؟ لا يمكن التراجع عن هذا الإجراء.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dialogContext, false),
+                        child: const Text('إلغاء'),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () => Navigator.pop(dialogContext, true),
+                        child: const Text('حذف'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm == true) {
+                  final success = await controller.deleteCustomer(customer.id);
+
+                  if (success) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('تم حذف العميل بنجاح')),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          controller.errorMessage.value ?? 'حدث خطأ',
+                        ),
+                      ),
+                    );
+                  }
+                }
               },
             ),
           ],
