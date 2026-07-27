@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-
+import 'package:get/get.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/login/login_screen.dart';
 
@@ -10,7 +10,7 @@ class DebtBookApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       title: 'دفتر الديون',
       debugShowCheckedModeBanner: false,
       // التطبيق عربي بالكامل ويعمل باتجاه RTL دائماً.

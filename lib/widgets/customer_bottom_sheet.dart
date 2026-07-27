@@ -71,7 +71,7 @@ class CustomerBottomSheet extends StatelessWidget {
     await showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(title),
+        title: Text('$title لـ ${customer.name}'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -259,7 +259,7 @@ class CustomerBottomSheet extends StatelessWidget {
                 final confirm = await showDialog<bool>(
                   context: context,
                   builder: (dialogContext) => AlertDialog(
-                    title: const Text('تأكيد الحذف'),
+                    title: Text('تأكيد الحذف'  ' لـ ${customer.name}'),
                     content: const Text(
                       'هل أنت متأكد أنك تريد حذف هذا العميل؟ لا يمكن التراجع عن هذا الإجراء.',
                     ),
@@ -282,18 +282,12 @@ class CustomerBottomSheet extends StatelessWidget {
 
                 if (confirm == true) {
                   final success = await controller.deleteCustomer(customer.id);
-
                   if (success) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('تم حذف العميل بنجاح')),
-                    );
+                    Get.snackbar('تم', 'تم حذف العميل بنجاح');
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          controller.errorMessage.value ?? 'حدث خطأ',
-                        ),
-                      ),
+                    Get.snackbar(
+                      'خطأ',
+                      controller.errorMessage.value ?? 'حدث خطأ',
                     );
                   }
                 }
