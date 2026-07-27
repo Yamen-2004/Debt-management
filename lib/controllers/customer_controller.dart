@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 import '../models/customer_model.dart';
@@ -64,6 +66,21 @@ class CustomerController extends GetxController {
     _backupService.runAutomaticBackupIfDue(customers);
   }
 
+  /// Maps a caught error to a user-facing message. Our own hand-thrown
+  /// business-rule exceptions are already friendly Arabic text and are
+  /// shown as-is; anything from the Firebase/Firestore plugin itself
+  /// (contention, offline, permission, etc.) is replaced with one
+  /// generic friendly message so raw technical text never reaches the
+  /// user — the real error is still logged for developers.
+  void _setErrorFrom(Object e) {
+    if (e is FirebaseException) {
+      debugPrint('CustomerController: Firebase error ${e.code}: ${e.message}');
+      errorMessage.value = 'حدث خطأ، الرجاء المحاولة مرة أخرى';
+    } else {
+      errorMessage.value = e.toString().replaceAll('Exception: ', '');
+    }
+  }
+
   void search(String query) {
     searchQuery.value = query;
     _applySearch();
@@ -99,7 +116,7 @@ class CustomerController extends GetxController {
       );
       return true;
     } catch (e) {
-      errorMessage.value = e.toString().replaceAll('Exception: ', '');
+      _setErrorFrom(e);
       return false;
     }
   }
@@ -140,7 +157,7 @@ Future<bool> deleteCustomer(String customerId) async {
       await _firestoreService.increaseBalance(customerId, amount, note: note);
       return true;
     } catch (e) {
-      errorMessage.value = e.toString().replaceAll('Exception: ', '');
+      _setErrorFrom(e);
       return false;
     }
   }
@@ -154,7 +171,7 @@ Future<bool> deleteCustomer(String customerId) async {
       await _firestoreService.decreaseBalance(customerId, amount, note: note);
       return true;
     } catch (e) {
-      errorMessage.value = e.toString().replaceAll('Exception: ', '');
+      _setErrorFrom(e);
       return false;
     }
   }
