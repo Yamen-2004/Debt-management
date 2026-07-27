@@ -119,6 +119,18 @@ class CustomerController extends GetxController {
     }
   }
 
+
+Future<bool> deleteCustomer(String customerId) async {
+    try {
+      await _firestoreService.deleteCustomer(customerId);
+      return true;
+    } catch (e) {
+      errorMessage.value = e.toString().replaceAll('Exception: ', '');
+      return false;
+    }
+  }
+
+
   Future<bool> increaseBalance(
     String customerId,
     double amount, {

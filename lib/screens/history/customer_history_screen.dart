@@ -122,8 +122,9 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
       backgroundColor: const Color(0xFFF6F7FB),
       appBar: AppBar(
         title: Text(
-          widget.customer.name,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          widget.customer.name + ' \n ' + widget.customer.balance.toStringAsFixed(2) + ' د.أ',
+          style: const TextStyle(fontWeight: FontWeight.bold , fontSize: 16),
+            overflow: TextOverflow.clip,
         ),
         backgroundColor: _kPrimary,
         foregroundColor: Colors.white,

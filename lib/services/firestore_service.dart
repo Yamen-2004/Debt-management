@@ -215,4 +215,20 @@ class FirestoreService {
       await batch.commit();
     }
   }
+
+
+  Future<void> deleteCustomer(String customerId) async {
+    final batch = _db.batch();
+
+    // Delete all transactions for this customer
+    final transactionDocs = await _transactionsRef(customerId).get();
+    for (final doc in transactionDocs.docs) {
+      batch.delete(doc.reference);
+    }
+
+    // Delete the customer document itself
+    batch.delete(_customersRef.doc(customerId));
+
+    await batch.commit();
+  }
 }
