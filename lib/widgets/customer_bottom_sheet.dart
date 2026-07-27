@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../controllers/customer_controller.dart';
@@ -28,6 +29,44 @@ class CustomerBottomSheet extends StatelessWidget {
     final amountController = TextEditingController();
     final noteController = TextEditingController();
     final controller = Get.find<CustomerController>();
+    final isSubmitting = false.obs;
+
+    Future<void> handleConfirm(BuildContext dialogContext) async {
+      if (isSubmitting.value) return;
+
+      final amount = double.tryParse(amountController.text.trim());
+      if (amount == null || amount <= 0) {
+        ScaffoldMessenger.of(dialogContext).showSnackBar(
+          const SnackBar(content: Text('أدخل مبلغاً صحيحاً')),
+        );
+        return;
+      }
+
+      isSubmitting.value = true;
+
+      final note = noteController.text;
+      final success = isIncrease
+          ? await controller.increaseBalance(customer.id, amount, note: note)
+          : await controller.decreaseBalance(customer.id, amount, note: note);
+
+      isSubmitting.value = false;
+      if (!dialogContext.mounted) return;
+
+      if (success) {
+        Navigator.pop(dialogContext);
+        ScaffoldMessenger.of(dialogContext).showSnackBar(
+          SnackBar(
+            content: Text(
+              isIncrease ? 'تمت إضافة الدين بنجاح' : 'تم تسجيل الدفعة بنجاح',
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(dialogContext).showSnackBar(
+          SnackBar(content: Text(controller.errorMessage.value ?? 'حدث خطأ')),
+        );
+      }
+    }
 
     await showDialog(
       context: context,
@@ -40,6 +79,9 @@ class CustomerBottomSheet extends StatelessWidget {
               controller: amountController,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
+              ],
               decoration: const InputDecoration(labelText: 'المبلغ (د.أ)'),
               autofocus: true,
             ),
@@ -55,34 +97,21 @@ class CustomerBottomSheet extends StatelessWidget {
             onPressed: () => Navigator.pop(dialogContext),
             child: const Text('إلغاء'),
           ),
-          ElevatedButton(
-            onPressed: () async {
-              final amount = double.tryParse(amountController.text.trim());
-              if (amount == null || amount <= 0) {
-                controller.errorMessage.value = 'أدخل مبلغاً صحيحاً';
-                return;
-              }
-
-              final note = noteController.text;
-              final success = isIncrease
-                  ? await controller.increaseBalance(customer.id, amount,
-                      note: note)
-                  : await controller.decreaseBalance(customer.id, amount,
-                      note: note);
-
-              if (dialogContext.mounted) {
-                Navigator.pop(dialogContext);
-                if (!success) {
-                  ScaffoldMessenger.of(dialogContext).showSnackBar(
-                    SnackBar(
-                        content: Text(
-                            controller.errorMessage.value ?? 'حدث خطأ')),
-                  );
-                }
-              }
-            },
-            child: const Text('تأكيد'),
-          ),
+          Obx(() => ElevatedButton(
+                onPressed: isSubmitting.value
+                    ? null
+                    : () => handleConfirm(dialogContext),
+                child: isSubmitting.value
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text('تأكيد'),
+              )),
         ],
       ),
     );

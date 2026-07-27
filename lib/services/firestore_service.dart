@@ -10,7 +10,13 @@ import '../utils/text_utils.dart';
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  String get _uid => FirebaseAuth.instance.currentUser!.uid;
+  String get _uid {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw Exception('يجب تسجيل الدخول أولاً');
+    }
+    return user.uid;
+  }
 
   CollectionReference<Map<String, dynamic>> get _customersRef =>
       _db.collection('shops').doc(_uid).collection('customers');
